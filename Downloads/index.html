@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Leave Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #fff6e8;
+      --bg-2: #ffe8cc;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-strong: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #0f766e;
+      --primary-soft: #d7f3ef;
+      --accent: #f97316;
+      --danger: #b91c1c;
+      --border: #f2d5ba;
+      --shadow: 0 10px 30px rgba(124, 45, 18, 0.12);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 20%, #fffdf7 0%, var(--bg-1) 38%, var(--bg-2) 100%);
+      min-height: 100vh;
+    }
+
+    .bg-shape {
+      position: fixed;
+      z-index: -1;
+      border-radius: 50%;
+      opacity: 0.23;
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    .bg-shape.one {
+      width: 320px;
+      height: 320px;
+      background: #f97316;
+      top: -80px;
+      left: -90px;
+      animation: drift 14s ease-in-out infinite;
+    }
+
+    .bg-shape.two {
+      width: 280px;
+      height: 280px;
+      background: #14b8a6;
+      right: -70px;
+      top: 30%;
+      animation: drift 16s ease-in-out infinite reverse;
+    }
+
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, -14px); }
+    }
+
+    .container {
+      width: min(1100px, 92vw);
+      margin: 24px auto 40px;
+      animation: fadeInUp 0.55s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3 {
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.98rem;
+    }
+
+    .pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-weight: 600;
+      font-size: 0.86rem;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: auto;
+      min-width: 110px;
+      font-size: 0.9rem;
+    }
+
+    .tab-btn:hover {
+      transform: translateY(-1px);
+      border-color: #efb27e;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    section.view {
+      display: none;
+      animation: fadeInUp 0.4s ease-out;
+    }
+
+    section.view.active {
+      display: block;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .summary-card.clickable {
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .summary-card.clickable:hover,
+    .summary-card.clickable:focus-visible {
+      border-color: #efb27e;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(124, 45, 18, 0.08);
+      outline: none;
+    }
+
+    .summary-card h3 {
+      font-size: 0.96rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 1.45rem;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+    }
+
+    .summary-note {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .layout-two {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .list-item strong {
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 6px;
+      text-transform: capitalize;
+    }
+
+    .badge.vacation { background: #ffedd5; color: #9a3412; }
+    .badge.sick { background: #fee2e2; color: #991b1b; }
+    .badge.casual { background: #dcfce7; color: #166534; }
+    .badge.parental { background: #dbeafe; color: #1d4ed8; }
+    .badge.other { background: #e5e7eb; color: #374151; }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #e4ccb5;
+      padding: 9px 10px;
+      font: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn-inline {
+      width: auto;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .auth-status {
+      font-size: 0.85rem;
+      color: #0f766e;
+      font-weight: 700;
+      background: #ecfeff;
+      border: 1px solid #99f6e4;
+      border-radius: 999px;
+      padding: 7px 11px;
+      white-space: nowrap;
+    }
+
+    .btn-danger {
+      background: #b91c1c;
+      color: #fff;
+      border-color: #b91c1c;
+    }
+
+    .btn-danger:hover {
+      filter: brightness(1.06);
+    }
+
+    .table-action-btn {
+      width: auto;
+      padding: 5px 9px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .auth-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 20;
+    }
+
+    .auth-modal.open {
+      display: flex;
+    }
+
+    .auth-panel {
+      width: min(460px, 100%);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .auth-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .auth-tab-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .auth-tab {
+      width: auto;
+      border-radius: 999px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-weight: 700;
+    }
+
+    .auth-tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .auth-panel-view {
+      display: none;
+    }
+
+    .auth-panel-view.active {
+      display: block;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .success {
+      color: #065f46;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f3e3d2;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fff8f0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.15px;
+    }
+
+    .filters-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin-bottom: 14px;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .calendar-toolbar .btn-secondary {
+      width: auto;
+    }
+
+    .calendar-nav-btn {
+      min-width: 42px;
+      padding: 8px 10px;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .calendar-legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #374151;
+      border: 1px solid #efd9c4;
+      background: #fff;
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .type-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .type-dot.vacation { background: #fb923c; }
+    .type-dot.sick { background: #ef4444; }
+    .type-dot.casual { background: #22c55e; }
+    .type-dot.parental { background: #3b82f6; }
+    .type-dot.other { background: #6b7280; }
+
+    .calendar-toolbar .month-input {
+      width: 180px;
+      max-width: 100%;
+    }
+
+    .calendar-shell {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .calendar-weekdays div {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 4px 0;
+      letter-spacing: 0.15px;
+    }
+
+    .day-cell {
+      border: 1px solid #edd8c2;
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px;
+      min-height: 78px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .day-cell:hover {
+      border-color: #f0a266;
+      transform: translateY(-1px);
+    }
+
+    .day-cell.other-month {
+      opacity: 0.5;
+      background: #fffaf5;
+    }
+
+    .day-cell.today {
+      outline: 2px solid #14b8a6;
+      outline-offset: -1px;
+    }
+
+    .day-cell.has-leave {
+      background: #f0fdfa;
+      border-color: #7eddd2;
+    }
+
+    .day-cell.selected {
+      background: #0f766e;
+      color: #fff;
+      border-color: #0f766e;
+    }
+
+    .day-number {
+      font-weight: 700;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.92rem;
+    }
+
+    .day-count {
+      align-self: flex-start;
+      border-radius: 999px;
+      background: #ccfbf1;
+      color: #0f766e;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 7px;
+    }
+
+    .day-cell.selected .day-count {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .day-markers {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 12px;
+      flex-wrap: wrap;
+    }
+
+    .day-cell.selected .day-markers .type-dot {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    }
+
+    .marker-more {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .day-cell.selected .marker-more {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+      margin: 8px 0;
+    }
+
+    @media (max-width: 1000px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filters-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .layout-two,
+      .form-grid,
+      .filters-grid,
+      .summary-grid,
+      .calendar-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        width: min(96vw, 700px);
+      }
+
+      table {
+        font-size: 0.86rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-shape one"></div>
+  <div class="bg-shape two"></div>
+
+  <main class="container">
+    <header>
+      <div>
+        <h1>Team Leave Tracker</h1>
+        <p class="subtitle">Log leave, view availability, and answer "who is away when" in one place.</p>
+      </div>
+      <div class="header-controls">
+        <div class="pill" id="todayPill">Today: --</div>
+        <div id="authStatus" class="auth-status">Guest</div>
+        <button type="button" class="btn-secondary btn-inline" id="openSignInBtn">Sign In</button>
+        <button type="button" class="btn-primary btn-inline" id="openSignUpBtn">Sign Up</button>
+        <button type="button" class="btn-secondary btn-inline" id="signOutBtn" style="display: none;">Sign Out</button>
+      </div>
+    </header>
+
+    <nav class="nav-tabs card" aria-label="Main navigation">
+      <button class="tab-btn active" data-view="dashboardView">Dashboard</button>
+      <button class="tab-btn" data-view="addView">Add Leave</button>
+      <button class="tab-btn" data-view="calendarView">Calendar</button>
+      <button class="tab-btn" data-view="recordsView">Records & Filters</button>
+    </nav>
+
+    <section id="dashboardView" class="view active">
+      <div class="summary-grid">
+        <div class="summary-card clickable" id="todaySummaryCard" role="button" tabindex="0" title="View today's leave records">
+          <h3>On Leave Today</h3>
+          <div class="summary-value" id="onLeaveTodayCount">0</div>
+          <div class="summary-note" id="onLeaveTodayNames">No one is away today.</div>
+        </div>
+        <div class="summary-card clickable" id="weekSummaryCard" role="button" tabindex="0" title="View this week's leave records">
+          <h3>On Leave This Week</h3>
+          <div class="summary-value" id="onLeaveWeekCount">0</div>
+          <div class="summary-note" id="onLeaveWeekNames">No leave this week.</div>
+        </div>
+        <div class="summary-card clickable" id="upcomingSummaryCard" role="button" tabindex="0" title="View upcoming leave records">
+          <h3>Upcoming (next 30 days)</h3>
+          <div class="summary-value" id="upcomingCount">0</div>
+          <div class="summary-note">Includes future leave starting soon.</div>
+        </div>
+        <div class="summary-card clickable" id="totalSummaryCard" role="button" tabindex="0" title="View all leave records">
+          <h3>Total Leave Records</h3>
+          <div class="summary-value" id="totalRecordsCount">0</div>
+          <div class="summary-note">Stored locally in this browser session.</div>
+        </div>
+      </div>
+
+      <div class="layout-two">
+        <article class="card">
+          <h2>This Week View</h2>
+          <p class="subtitle">People who are on leave during the current week.</p>
+          <div id="thisWeekList" class="stack"></div>
+        </article>
+
+        <article class="card">
+          <h2>Upcoming Leave</h2>
+          <p class="subtitle">Future leave entries in chronological order.</p>
+          <div id="upcomingList" class="stack"></div>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top: 12px;">
+        <h2>Unavailable People View</h2>
+        <p class="subtitle">Check who is unavailable on a selected day or date range.</p>
+        <div class="form-grid">
+          <div>
+            <label for="unavailableStart">Start date</label>
+            <input type="date" id="unavailableStart" />
+          </div>
+          <div>
+            <label for="unavailableEnd">End date (optional)</label>
+            <input type="date" id="unavailableEnd" />
+            <div class="hint">If blank, the app checks only the start date.</div>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top: 10px;">
+          <button class="btn-primary" id="checkUnavailableBtn" type="button">Check Availability</button>
+        </div>
+        <div id="unavailableMessage" class="hint" style="margin-top: 8px;"></div>
+        <div id="unavailableList" class="stack" style="margin-top: 10px;"></div>
+      </article>
+    </section>
+
+    <section id="addView" class="view">
+      <article class="card">
+        <h2>Log Leave Entry</h2>
+        <p class="subtitle">Required fields are validated and date rules are enforced.</p>
+
+        <form id="leaveForm" novalidate>
+          <div class="form-grid">
+            <div>
+              <label for="name">Name *</label>
+              <input type="text" id="name" placeholder="e.g. Priya Sharma" required />
+            </div>
+            <div>
+              <label for="identifier">Email or Team Identifier *</label>
+              <input type="text" id="identifier" placeholder="e.g. priya@team.com" required />
+            </div>
+            <div>
+              <label for="leaveType">Leave Type *</label>
+              <select id="leaveType" required>
+                <option value="">Select type</option>
+                <option value="vacation">Vacation</option>
+                <option value="sick">Sick</option>
+                <option value="casual">Casual</option>
+                <option value="parental">Parental</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="startDate">Start Date *</label>
+              <input type="date" id="startDate" required />
+            </div>
+            <div>
+              <label for="endDate">End Date *</label>
+              <input type="date" id="endDate" required />
+            </div>
+            <div>
+              <label for="notes">Reason / Notes</label>
+              <textarea id="notes" placeholder="Optional note"></textarea>
+            </div>
+          </div>
+
+          <div id="formError" class="error" role="alert" aria-live="polite"></div>
+          <div id="formSuccess" class="success" role="status" aria-live="polite"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Leave</button>
+            <button type="button" class="btn-secondary" id="loadSampleBtn">Load Sample Data</button>
+            <button type="button" class="btn-secondary" id="clearAllBtn">Clear All Records</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section id="calendarView" class="view">
+      <article class="card">
+        <h2>Calendar View</h2>
+        <p class="subtitle">See leave distribution by month and click a day to view unavailable people.</p>
+
+        <div class="calendar-toolbar">
+          <button type="button" class="btn-secondary calendar-nav-btn" id="calendarPrevBtn" aria-label="Previous Month" title="Previous Month">&larr;</button>
+          <button type="button" class="btn-secondary calendar-nav-btn" id="calendarTodayBtn" aria-label="Current Month" title="Current Month">&bull;</button>
+          <button type="button" class="btn-secondary calendar-nav-btn" id="calendarNextBtn" aria-label="Next Month" title="Next Month">&rarr;</button>
+          <input class="month-input" type="month" id="calendarMonth" />
+        </div>
+
+        <div class="calendar-legend" aria-label="Leave type legend">
+          <span class="legend-item"><span class="type-dot vacation"></span>Vacation</span>
+          <span class="legend-item"><span class="type-dot sick"></span>Sick</span>
+          <span class="legend-item"><span class="type-dot casual"></span>Casual</span>
+          <span class="legend-item"><span class="type-dot parental"></span>Parental</span>
+          <span class="legend-item"><span class="type-dot other"></span>Other</span>
+        </div>
+
+        <div class="calendar-shell">
+          <div>
+            <div class="calendar-weekdays">
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+              <div>Sun</div>
+            </div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+
+          <div>
+            <h3 id="calendarDayTitle">Selected Day</h3>
+            <p class="hint" id="calendarDayMeta">Choose a date to see who is unavailable.</p>
+            <div id="calendarDayList" class="stack"></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="recordsView" class="view">
+      <article class="card">
+        <h2>Records & Filters</h2>
+        <p class="subtitle">Filter by employee, leave type, date range, or quick time window.</p>
+
+        <div class="filters-grid">
+          <div>
+            <label for="filterName">Employee name</label>
+            <input type="text" id="filterName" placeholder="Search by name" />
+          </div>
+          <div>
+            <label for="filterType">Leave type</label>
+            <select id="filterType">
+              <option value="">All types</option>
+              <option value="vacation">Vacation</option>
+              <option value="sick">Sick</option>
+              <option value="casual">Casual</option>
+              <option value="parental">Parental</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="filterStart">Date range start</label>
+            <input type="date" id="filterStart" />
+          </div>
+          <div>
+            <label for="filterEnd">Date range end</label>
+            <input type="date" id="filterEnd" />
+          </div>
+          <div>
+            <label for="filterWindow">Time window</label>
+            <select id="filterWindow">
+              <option value="all">All records</option>
+              <option value="today">Today</option>
+              <option value="thisWeek">This week</option>
+              <option value="upcoming30">Upcoming 30 days</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-bottom: 8px;">
+          <button type="button" class="btn-secondary" id="clearFiltersBtn">Clear Filters</button>
+        </div>
+
+        <div class="hint" id="filterResultInfo"></div>
+
+        <div style="overflow-x: auto; margin-top: 10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Identifier</th>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="authModal" class="auth-modal" aria-hidden="true">
+    <div class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="auth-top">
+        <h3 id="authTitle">Account Access</h3>
+        <button type="button" class="btn-secondary btn-inline" id="authCloseBtn">Close</button>
+      </div>
+
+      <div class="auth-tab-row">
+        <button type="button" id="authTabSignIn" class="auth-tab active">Sign In</button>
+        <button type="button" id="authTabSignUp" class="auth-tab">Sign Up</button>
+      </div>
+
+      <div id="authError" class="error" role="alert" aria-live="polite"></div>
+      <div id="authSuccess" class="success" role="status" aria-live="polite"></div>
+
+      <div id="signInPanel" class="auth-panel-view active">
+        <form id="signInForm" novalidate>
+          <div>
+            <label for="signInEmail">Email *</label>
+            <input type="email" id="signInEmail" placeholder="you@company.com" required />
+          </div>
+          <div>
+            <label for="signInPassword">Password *</label>
+            <input type="password" id="signInPassword" placeholder="Enter password" required />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary btn-inline">Sign In</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="signUpPanel" class="auth-panel-view">
+        <form id="signUpForm" novalidate>
+          <div>
+            <label for="signUpName">Full Name *</label>
+            <input type="text" id="signUpName" placeholder="Your name" required />
+          </div>
+          <div>
+            <label for="signUpEmail">Email *</label>
+            <input type="email" id="signUpEmail" placeholder="you@company.com" required />
+          </div>
+          <div>
+            <label for="signUpPassword">Password *</label>
+            <input type="password" id="signUpPassword" placeholder="Create password" required />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary btn-inline">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "teamLeaveTracker.v1";
+    const AUTH_USERS_KEY = "teamLeaveTracker.users.v1";
+    const AUTH_SESSION_KEY = "teamLeaveTracker.session.v1";
+
+    const els = {
+      todayPill: document.getElementById("todayPill"),
+      onLeaveTodayCount: document.getElementById("onLeaveTodayCount"),
+      onLeaveTodayNames: document.getElementById("onLeaveTodayNames"),
+      onLeaveWeekCount: document.getElementById("onLeaveWeekCount"),
+      onLeaveWeekNames: document.getElementById("onLeaveWeekNames"),
+      todaySummaryCard: document.getElementById("todaySummaryCard"),
+      weekSummaryCard: document.getElementById("weekSummaryCard"),
+      upcomingSummaryCard: document.getElementById("upcomingSummaryCard"),
+      totalSummaryCard: document.getElementById("totalSummaryCard"),
+      upcomingCount: document.getElementById("upcomingCount"),
+      totalRecordsCount: document.getElementById("totalRecordsCount"),
+      thisWeekList: document.getElementById("thisWeekList"),
+      upcomingList: document.getElementById("upcomingList"),
+      unavailableStart: document.getElementById("unavailableStart"),
+      unavailableEnd: document.getElementById("unavailableEnd"),
+      checkUnavailableBtn: document.getElementById("checkUnavailableBtn"),
+      unavailableMessage: document.getElementById("unavailableMessage"),
+      unavailableList: document.getElementById("unavailableList"),
+
+      calendarPrevBtn: document.getElementById("calendarPrevBtn"),
+      calendarTodayBtn: document.getElementById("calendarTodayBtn"),
+      calendarNextBtn: document.getElementById("calendarNextBtn"),
+      calendarMonth: document.getElementById("calendarMonth"),
+      calendarGrid: document.getElementById("calendarGrid"),
+      calendarDayTitle: document.getElementById("calendarDayTitle"),
+      calendarDayMeta: document.getElementById("calendarDayMeta"),
+      calendarDayList: document.getElementById("calendarDayList"),
+
+      leaveForm: document.getElementById("leaveForm"),
+      name: document.getElementById("name"),
+      identifier: document.getElementById("identifier"),
+      leaveType: document.getElementById("leaveType"),
+      startDate: document.getElementById("startDate"),
+      endDate: document.getElementById("endDate"),
+      notes: document.getElementById("notes"),
+      formError: document.getElementById("formError"),
+      formSuccess: document.getElementById("formSuccess"),
+      loadSampleBtn: document.getElementById("loadSampleBtn"),
+      clearAllBtn: document.getElementById("clearAllBtn"),
+
+      filterName: document.getElementById("filterName"),
+      filterType: document.getElementById("filterType"),
+      filterStart: document.getElementById("filterStart"),
+      filterEnd: document.getElementById("filterEnd"),
+      filterWindow: document.getElementById("filterWindow"),
+      clearFiltersBtn: document.getElementById("clearFiltersBtn"),
+      filterResultInfo: document.getElementById("filterResultInfo"),
+      recordsTableBody: document.getElementById("recordsTableBody"),
+
+      authStatus: document.getElementById("authStatus"),
+      openSignInBtn: document.getElementById("openSignInBtn"),
+      openSignUpBtn: document.getElementById("openSignUpBtn"),
+      signOutBtn: document.getElementById("signOutBtn"),
+      authModal: document.getElementById("authModal"),
+      authCloseBtn: document.getElementById("authCloseBtn"),
+      authTabSignIn: document.getElementById("authTabSignIn"),
+      authTabSignUp: document.getElementById("authTabSignUp"),
+      signInPanel: document.getElementById("signInPanel"),
+      signUpPanel: document.getElementById("signUpPanel"),
+      signInForm: document.getElementById("signInForm"),
+      signUpForm: document.getElementById("signUpForm"),
+      signInEmail: document.getElementById("signInEmail"),
+      signInPassword: document.getElementById("signInPassword"),
+      signUpName: document.getElementById("signUpName"),
+      signUpEmail: document.getElementById("signUpEmail"),
+      signUpPassword: document.getElementById("signUpPassword"),
+      authError: document.getElementById("authError"),
+      authSuccess: document.getElementById("authSuccess")
+    };
+
+    let leaveRecords = loadRecords();
+    let authUsers = loadAuthUsers();
+    let currentUser = loadSessionUser();
+    let calendarMonthDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let selectedCalendarDate = dateStr(new Date());
+
+    function toDate(value) {
+      const d = new Date(value + "T00:00:00");
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatDate(value) {
+      const d = toDate(value);
+      return d ? d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "-";
+    }
+
+    function dateStr(dateObj) {
+      return dateObj.toISOString().slice(0, 10);
+    }
+
+    function overlaps(startA, endA, startB, endB) {
+      return startA <= endB && endA >= startB;
+    }
+
+    function validateDateRange(startValue, endValue, options = {}) {
+      const { allowBlankEnd = false } = options;
+      if (!startValue) return "";
+
+      const resolvedEnd = allowBlankEnd ? (endValue || startValue) : endValue;
+      if (!resolvedEnd) return "";
+
+      const start = toDate(startValue);
+      const end = toDate(resolvedEnd);
+      if (!start || !end) return "Please select valid dates.";
+      if (start > end) return "Start date cannot be greater than end date.";
+      return "";
+    }
+
+    function getWeekRange(baseDate = new Date()) {
+      const d = new Date(baseDate);
+      d.setHours(0, 0, 0, 0);
+      const day = d.getDay();
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      const start = new Date(d);
+      start.setDate(d.getDate() + mondayOffset);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return { start, end };
+    }
+
+    function statusForRecord(rec, today = new Date()) {
+      const t = new Date(today);
+      t.setHours(0, 0, 0, 0);
+      const start = toDate(rec.startDate);
+      const end = toDate(rec.endDate);
+      if (!start || !end) return "Unknown";
+      if (t < start) return "Upcoming";
+      if (t > end) return "Completed";
+      return "On Leave";
+    }
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function loadAuthUsers() {
+      try {
+        const raw = localStorage.getItem(AUTH_USERS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveAuthUsers() {
+      localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(authUsers));
+    }
+
+    function loadSessionUser() {
+      try {
+        const raw = localStorage.getItem(AUTH_SESSION_KEY);
+        if (!raw) return null;
+        const session = JSON.parse(raw);
+        if (!session || !session.userId) return null;
+        return authUsers.find((u) => u.id === session.userId) || null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveSessionUser(user) {
+      if (!user) {
+        localStorage.removeItem(AUTH_SESSION_KEY);
+        currentUser = null;
+        return;
+      }
+
+      localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ userId: user.id }));
+      currentUser = user;
+    }
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(leaveRecords));
+    }
+
+    function uniqueNames(records) {
+      return [...new Set(records.map((r) => r.name.trim()))];
+    }
+
+    function monthInputValue(dateObj) {
+      return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function getRecordsOnDate(dateObj) {
+      return leaveRecords
+        .filter((rec) => overlaps(toDate(rec.startDate), toDate(rec.endDate), dateObj, dateObj))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function uniqueLeaveTypes(records) {
+      return [...new Set(records.map((r) => r.leaveType))];
+    }
+
+    function buildDayTooltip(entries) {
+      if (!entries.length) return "No leave entries.";
+      return entries
+        .map((entry) => `${entry.name} (${entry.leaveType}) - ${formatDate(entry.startDate)} to ${formatDate(entry.endDate)}`)
+        .join(" | ");
+    }
+
+    function renderCalendarDayPanel() {
+      const selectedDateObj = toDate(selectedCalendarDate);
+      if (!selectedDateObj) return;
+
+      const entries = getRecordsOnDate(selectedDateObj);
+      els.calendarDayTitle.textContent = selectedDateObj.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+
+      if (!entries.length) {
+        els.calendarDayMeta.textContent = "Everyone appears available on this date.";
+        els.calendarDayList.innerHTML = `<p class="empty">No leave entries on the selected day.</p>`;
+        return;
+      }
+
+      const unique = uniqueNames(entries).length;
+      els.calendarDayMeta.textContent = `${unique} person(s) unavailable on this date.`;
+      els.calendarDayList.innerHTML = entries.map(createRecordCard).join("");
+    }
+
+    function renderCalendar() {
+      if (!els.calendarGrid) return;
+
+      const year = calendarMonthDate.getFullYear();
+      const month = calendarMonthDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const offset = (firstDay.getDay() + 6) % 7;
+      const cellCount = Math.ceil((offset + daysInMonth) / 7) * 7;
+      const today = dateStr(new Date());
+
+      els.calendarMonth.value = monthInputValue(calendarMonthDate);
+
+      const cells = [];
+      for (let i = 0; i < cellCount; i += 1) {
+        const dayNumber = i - offset + 1;
+        const cellDate = new Date(year, month, dayNumber);
+        const cellDateString = dateStr(cellDate);
+        const inCurrentMonth = dayNumber >= 1 && dayNumber <= daysInMonth;
+        const dayEntries = getRecordsOnDate(cellDate);
+        const leaveTypes = uniqueLeaveTypes(dayEntries);
+        const visibleTypes = leaveTypes.slice(0, 3);
+        const hiddenTypeCount = Math.max(leaveTypes.length - visibleTypes.length, 0);
+        const dayTooltip = buildDayTooltip(dayEntries);
+
+        const classes = ["day-cell"];
+        if (!inCurrentMonth) classes.push("other-month");
+        if (cellDateString === today) classes.push("today");
+        if (dayEntries.length) classes.push("has-leave");
+        if (cellDateString === selectedCalendarDate) classes.push("selected");
+
+        cells.push(`
+          <button type="button" class="${classes.join(" ")}" data-calendar-date="${cellDateString}" title="${escapeHtml(dayTooltip)}" aria-label="${escapeHtml(dayTooltip)}">
+            <span class="day-number">${cellDate.getDate()}</span>
+            <span class="day-markers">
+              ${visibleTypes.map((type) => `<span class="type-dot ${escapeHtml(type)}" title="${escapeHtml(type)}"></span>`).join("")}
+              ${hiddenTypeCount ? `<span class="marker-more">+${hiddenTypeCount}</span>` : ""}
+            </span>
+            ${dayEntries.length ? `<span class="day-count">${dayEntries.length} away</span>` : ""}
+          </button>
+        `);
+      }
+
+      els.calendarGrid.innerHTML = cells.join("");
+
+      els.calendarGrid.querySelectorAll("[data-calendar-date]").forEach((node) => {
+        node.addEventListener("click", () => {
+          selectedCalendarDate = node.getAttribute("data-calendar-date");
+          renderCalendar();
+          renderCalendarDayPanel();
+        });
+      });
+
+      renderCalendarDayPanel();
+    }
+
+    function changeCalendarMonth(monthDelta) {
+      calendarMonthDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth() + monthDelta, 1);
+      renderCalendar();
+    }
+
+    function createRecordCard(rec) {
+      const status = statusForRecord(rec);
+      return `
+        <div class="list-item">
+          <strong>${escapeHtml(rec.name)}</strong>
+          <span class="badge ${escapeHtml(rec.leaveType)}">${escapeHtml(rec.leaveType)}</span>
+          <div class="hint">${formatDate(rec.startDate)} to ${formatDate(rec.endDate)} • ${status}</div>
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function refreshDashboard() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      els.todayPill.textContent = `Today: ${today.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}`;
+
+      const todayOnLeave = leaveRecords.filter((rec) => {
+        const s = toDate(rec.startDate);
+        const e = toDate(rec.endDate);
+        return s && e && overlaps(s, e, today, today);
+      });
+
+      const week = getWeekRange(today);
+      const weekOnLeave = leaveRecords.filter((rec) => {
+        const s = toDate(rec.startDate);
+        const e = toDate(rec.endDate);
+        return s && e && overlaps(s, e, week.start, week.end);
+      });
+
+      const next30 = new Date(today);
+      next30.setDate(today.getDate() + 30);
+      const upcoming = leaveRecords
+        .filter((rec) => {
+          const s = toDate(rec.startDate);
+          return s && s > today && s <= next30;
+        })
+        .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+      els.onLeaveTodayCount.textContent = String(todayOnLeave.length);
+      els.onLeaveTodayNames.textContent = todayOnLeave.length ? uniqueNames(todayOnLeave).join(", ") : "No one is away today.";
+      els.onLeaveWeekCount.textContent = String(weekOnLeave.length);
+      els.onLeaveWeekNames.textContent = weekOnLeave.length ? uniqueNames(weekOnLeave).join(", ") : "No leave this week.";
+      els.upcomingCount.textContent = String(upcoming.length);
+      els.totalRecordsCount.textContent = String(leaveRecords.length);
+
+      els.thisWeekList.innerHTML = weekOnLeave.length
+        ? weekOnLeave
+            .sort((a, b) => a.startDate.localeCompare(b.startDate))
+            .map(createRecordCard)
+            .join("")
+        : `<p class="empty">No one is on leave this week.</p>`;
+
+      els.upcomingList.innerHTML = upcoming.length
+        ? upcoming.map(createRecordCard).join("")
+        : `<p class="empty">No upcoming leave entries in the next 30 days.</p>`;
+    }
+
+    function getFilteredRecords() {
+      const nameQuery = els.filterName.value.trim().toLowerCase();
+      const type = els.filterType.value;
+      const from = els.filterStart.value ? toDate(els.filterStart.value) : null;
+      const to = els.filterEnd.value ? toDate(els.filterEnd.value) : null;
+      const windowMode = els.filterWindow.value;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const week = getWeekRange(today);
+      const upcomingEnd = new Date(today);
+      upcomingEnd.setDate(today.getDate() + 30);
+
+      return leaveRecords.filter((rec) => {
+        const recStart = toDate(rec.startDate);
+        const recEnd = toDate(rec.endDate);
+        if (!recStart || !recEnd) return false;
+
+        if (nameQuery && !rec.name.toLowerCase().includes(nameQuery)) return false;
+        if (type && rec.leaveType !== type) return false;
+
+        if (from && to && !overlaps(recStart, recEnd, from, to)) return false;
+        if (from && !to && !overlaps(recStart, recEnd, from, from)) return false;
+        if (!from && to && !overlaps(recStart, recEnd, to, to)) return false;
+
+        if (windowMode === "today" && !overlaps(recStart, recEnd, today, today)) return false;
+        if (windowMode === "thisWeek" && !overlaps(recStart, recEnd, week.start, week.end)) return false;
+        if (windowMode === "upcoming30") {
+          if (!(recStart > today && recStart <= upcomingEnd)) return false;
+        }
+
+        return true;
+      }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+    }
+
+    function renderRecordsTable() {
+      const filtered = getFilteredRecords();
+      els.filterResultInfo.textContent = `${filtered.length} record(s) shown.`;
+
+      if (!filtered.length) {
+        els.recordsTableBody.innerHTML = `<tr><td colspan="8" class="empty">No leave records match your filters.</td></tr>`;
+        return;
+      }
+
+      els.recordsTableBody.innerHTML = filtered.map((rec) => `
+        <tr>
+          <td>${escapeHtml(rec.name)}</td>
+          <td>${escapeHtml(rec.identifier)}</td>
+          <td><span class="badge ${escapeHtml(rec.leaveType)}">${escapeHtml(rec.leaveType)}</span></td>
+          <td>${formatDate(rec.startDate)}</td>
+          <td>${formatDate(rec.endDate)}</td>
+          <td>${statusForRecord(rec)}</td>
+          <td>${escapeHtml(rec.notes || "-")}</td>
+          <td><button type="button" class="btn-danger table-action-btn" data-delete-id="${escapeHtml(rec.id)}">Delete</button></td>
+        </tr>
+      `).join("");
+
+      els.recordsTableBody.querySelectorAll("[data-delete-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const recordId = btn.getAttribute("data-delete-id");
+          if (!recordId) return;
+          deleteLeaveRecord(recordId);
+        });
+      });
+    }
+
+    function deleteLeaveRecord(recordId) {
+      const target = leaveRecords.find((rec) => rec.id === recordId);
+      if (!target) return;
+
+      const shouldDelete = confirm(`Delete leave record for ${target.name} from ${formatDate(target.startDate)} to ${formatDate(target.endDate)}?`);
+      if (!shouldDelete) return;
+
+      leaveRecords = leaveRecords.filter((rec) => rec.id !== recordId);
+      saveRecords();
+      refreshAllViews();
+      els.formSuccess.textContent = "Leave record deleted.";
+      els.formError.textContent = "";
+    }
+
+    function setAuthMessage(errorText = "", successText = "") {
+      els.authError.textContent = errorText;
+      els.authSuccess.textContent = successText;
+    }
+
+    function setAuthMode(mode) {
+      const signInMode = mode === "signin";
+      els.authTabSignIn.classList.toggle("active", signInMode);
+      els.authTabSignUp.classList.toggle("active", !signInMode);
+      els.signInPanel.classList.toggle("active", signInMode);
+      els.signUpPanel.classList.toggle("active", !signInMode);
+      setAuthMessage();
+    }
+
+    function openAuthModal(mode = "signin") {
+      setAuthMode(mode);
+      els.authModal.classList.add("open");
+      els.authModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeAuthModal() {
+      els.authModal.classList.remove("open");
+      els.authModal.setAttribute("aria-hidden", "true");
+      setAuthMessage();
+      els.signInForm.reset();
+      els.signUpForm.reset();
+    }
+
+    function refreshAuthUI() {
+      if (currentUser) {
+        els.authStatus.textContent = `Signed in: ${currentUser.name}`;
+        els.openSignInBtn.style.display = "none";
+        els.openSignUpBtn.style.display = "none";
+        els.signOutBtn.style.display = "inline-flex";
+        return;
+      }
+
+      els.authStatus.textContent = "Guest";
+      els.openSignInBtn.style.display = "inline-flex";
+      els.openSignUpBtn.style.display = "inline-flex";
+      els.signOutBtn.style.display = "none";
+    }
+
+    function handleSignUp(event) {
+      event.preventDefault();
+
+      const name = els.signUpName.value.trim();
+      const email = els.signUpEmail.value.trim().toLowerCase();
+      const password = els.signUpPassword.value;
+
+      if (!name || !email || !password) {
+        setAuthMessage("Please complete all sign up fields.", "");
+        return;
+      }
+
+      if (password.length < 6) {
+        setAuthMessage("Password should be at least 6 characters.", "");
+        return;
+      }
+
+      const exists = authUsers.some((user) => user.email === email);
+      if (exists) {
+        setAuthMessage("An account with this email already exists.", "");
+        return;
+      }
+
+      const newUser = {
+        id: crypto.randomUUID(),
+        name,
+        email,
+        password,
+        createdAt: Date.now()
+      };
+
+      authUsers.push(newUser);
+      saveAuthUsers();
+      saveSessionUser(newUser);
+      refreshAuthUI();
+      setAuthMessage("", "Account created. You are now signed in.");
+      setTimeout(closeAuthModal, 700);
+    }
+
+    function handleSignIn(event) {
+      event.preventDefault();
+
+      const email = els.signInEmail.value.trim().toLowerCase();
+      const password = els.signInPassword.value;
+      if (!email || !password) {
+        setAuthMessage("Please enter email and password.", "");
+        return;
+      }
+
+      const user = authUsers.find((u) => u.email === email && u.password === password);
+      if (!user) {
+        setAuthMessage("Invalid email or password.", "");
+        return;
+      }
+
+      saveSessionUser(user);
+      refreshAuthUI();
+      setAuthMessage("", "Signed in successfully.");
+      setTimeout(closeAuthModal, 600);
+    }
+
+    function signOut() {
+      saveSessionUser(null);
+      refreshAuthUI();
+      els.formSuccess.textContent = "Signed out successfully.";
+      els.formError.textContent = "";
+    }
+
+    function validateFormInput(data) {
+      if (!data.name || !data.identifier || !data.leaveType || !data.startDate || !data.endDate) {
+        return "Please complete all required fields.";
+      }
+
+      const dateRangeError = validateDateRange(data.startDate, data.endDate);
+      if (dateRangeError) return dateRangeError;
+
+      const start = toDate(data.startDate);
+      const end = toDate(data.endDate);
+      if (!start || !end) return "Please enter valid dates.";
+
+      const overlapForSameIdentifier = leaveRecords.some((rec) => {
+        if (rec.identifier.trim().toLowerCase() !== data.identifier.trim().toLowerCase()) return false;
+        return overlaps(toDate(rec.startDate), toDate(rec.endDate), start, end);
+      });
+
+      if (overlapForSameIdentifier) {
+        return "This person already has a leave entry that overlaps the selected dates.";
+      }
+
+      return "";
+    }
+
+    function handleSaveLeave(event) {
+      event.preventDefault();
+      els.formError.textContent = "";
+      els.formSuccess.textContent = "";
+
+      const data = {
+        id: crypto.randomUUID(),
+        name: els.name.value.trim(),
+        identifier: els.identifier.value.trim(),
+        leaveType: els.leaveType.value,
+        startDate: els.startDate.value,
+        endDate: els.endDate.value,
+        notes: els.notes.value.trim(),
+        createdAt: Date.now()
+      };
+
+      const error = validateFormInput(data);
+      if (error) {
+        els.formError.textContent = error;
+        return;
+      }
+
+      leaveRecords.push(data);
+      saveRecords();
+      refreshAllViews();
+      els.leaveForm.reset();
+      els.formSuccess.textContent = "Leave entry saved successfully.";
+      activateView("dashboardView");
+    }
+
+    function checkUnavailablePeople() {
+      const startValue = els.unavailableStart.value;
+      const endValue = els.unavailableEnd.value || startValue;
+
+      els.unavailableMessage.textContent = "";
+      els.unavailableList.innerHTML = "";
+
+      if (!startValue) {
+        els.unavailableMessage.textContent = "Please select at least a start date.";
+        return;
+      }
+
+      const dateRangeError = validateDateRange(startValue, els.unavailableEnd.value, { allowBlankEnd: true });
+      if (dateRangeError) {
+        els.unavailableMessage.textContent = dateRangeError;
+        return;
+      }
+
+      const start = toDate(startValue);
+      const end = toDate(endValue);
+      if (!start || !end) return;
+
+      const unavailable = leaveRecords
+        .filter((rec) => overlaps(toDate(rec.startDate), toDate(rec.endDate), start, end))
+        .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+      if (!unavailable.length) {
+        els.unavailableMessage.textContent = "Everyone appears available for the selected period.";
+        return;
+      }
+
+      els.unavailableMessage.textContent = `${uniqueNames(unavailable).length} person(s) unavailable from ${formatDate(dateStr(start))} to ${formatDate(dateStr(end))}.`;
+      els.unavailableList.innerHTML = unavailable.map(createRecordCard).join("");
+    }
+
+    function clearFilters() {
+      els.filterName.value = "";
+      els.filterType.value = "";
+      els.filterStart.value = "";
+      els.filterEnd.value = "";
+      els.filterWindow.value = "all";
+      renderRecordsTable();
+    }
+
+    function loadSampleData() {
+      if (leaveRecords.length && !confirm("Sample data will be added to your existing records. Continue?")) {
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const plus = (days) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + days);
+        return dateStr(d);
+      };
+
+      const sample = [
+        {
+          id: crypto.randomUUID(),
+          name: "Aisha Khan",
+          identifier: "aisha.khan@team.local",
+          leaveType: "vacation",
+          startDate: plus(1),
+          endDate: plus(4),
+          notes: "Family trip",
+          createdAt: Date.now()
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Rohit Mehra",
+          identifier: "rohit.mehra@team.local",
+          leaveType: "sick",
+          startDate: plus(-1),
+          endDate: plus(1),
+          notes: "Recovery leave",
+          createdAt: Date.now()
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Elena Costa",
+          identifier: "elena.costa@team.local",
+          leaveType: "casual",
+          startDate: plus(8),
+          endDate: plus(8),
+          notes: "Personal day",
+          createdAt: Date.now()
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "Sam Okoro",
+          identifier: "sam.okoro@team.local",
+          leaveType: "parental",
+          startDate: plus(15),
+          endDate: plus(24),
+          notes: "Parental leave",
+          createdAt: Date.now()
+        }
+      ];
+
+      leaveRecords = [...leaveRecords, ...sample];
+      saveRecords();
+      refreshAllViews();
+      els.formSuccess.textContent = "Sample data loaded.";
+      els.formError.textContent = "";
+    }
+
+    function clearAllRecords() {
+      if (!leaveRecords.length) return;
+      if (!confirm("Delete all leave records? This action cannot be undone.")) return;
+      leaveRecords = [];
+      saveRecords();
+      refreshAllViews();
+      els.formSuccess.textContent = "All records cleared.";
+      els.formError.textContent = "";
+    }
+
+    function refreshAllViews() {
+      refreshDashboard();
+      renderRecordsTable();
+      checkUnavailablePeople();
+      renderCalendar();
+    }
+
+    function activateView(target) {
+      const tabs = document.querySelectorAll(".tab-btn");
+      const views = document.querySelectorAll("section.view");
+
+      tabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.view === target);
+      });
+
+      views.forEach((view) => {
+        view.classList.toggle("active", view.id === target);
+      });
+
+      if (target === "addView") {
+        els.leaveForm.reset();
+        els.formError.textContent = "";
+        els.formSuccess.textContent = "";
+      }
+
+      refreshAllViews();
+    }
+
+    function openRecordsWithWindow(windowMode) {
+      els.filterName.value = "";
+      els.filterType.value = "";
+      els.filterStart.value = "";
+      els.filterEnd.value = "";
+      els.filterWindow.value = windowMode;
+      activateView("recordsView");
+    }
+
+    function setupNavigation() {
+      const tabs = document.querySelectorAll(".tab-btn");
+
+      tabs.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activateView(btn.dataset.view);
+        });
+      });
+    }
+
+    function wireEvents() {
+      els.leaveForm.addEventListener("submit", handleSaveLeave);
+      els.loadSampleBtn.addEventListener("click", loadSampleData);
+      els.clearAllBtn.addEventListener("click", clearAllRecords);
+      els.checkUnavailableBtn.addEventListener("click", checkUnavailablePeople);
+      els.openSignInBtn.addEventListener("click", () => openAuthModal("signin"));
+      els.openSignUpBtn.addEventListener("click", () => openAuthModal("signup"));
+      els.signOutBtn.addEventListener("click", signOut);
+      els.authCloseBtn.addEventListener("click", closeAuthModal);
+      els.authTabSignIn.addEventListener("click", () => setAuthMode("signin"));
+      els.authTabSignUp.addEventListener("click", () => setAuthMode("signup"));
+      els.signInForm.addEventListener("submit", handleSignIn);
+      els.signUpForm.addEventListener("submit", handleSignUp);
+      els.authModal.addEventListener("click", (event) => {
+        if (event.target === els.authModal) closeAuthModal();
+      });
+
+      const summaryCardTargets = new Map([
+        [els.todaySummaryCard, "today"],
+        [els.weekSummaryCard, "thisWeek"],
+        [els.upcomingSummaryCard, "upcoming30"],
+        [els.totalSummaryCard, "all"]
+      ]);
+
+      summaryCardTargets.forEach((windowMode, cardEl) => {
+        cardEl.addEventListener("click", () => openRecordsWithWindow(windowMode));
+        cardEl.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          openRecordsWithWindow(windowMode);
+        });
+      });
+
+      [els.startDate, els.endDate].forEach((dateEl) => {
+        dateEl.addEventListener("change", () => {
+          const dateRangeError = validateDateRange(els.startDate.value, els.endDate.value);
+          if (dateRangeError) {
+            els.formError.textContent = dateRangeError;
+            els.formSuccess.textContent = "";
+            return;
+          }
+
+          if (els.formError.textContent === "Start date cannot be greater than end date." || els.formError.textContent === "Please select valid dates.") {
+            els.formError.textContent = "";
+          }
+        });
+      });
+
+      [els.unavailableStart, els.unavailableEnd].forEach((dateEl) => {
+        dateEl.addEventListener("change", () => {
+          const startValue = els.unavailableStart.value;
+          const dateRangeError = validateDateRange(startValue, els.unavailableEnd.value, { allowBlankEnd: true });
+
+          if (dateRangeError) {
+            els.unavailableMessage.textContent = dateRangeError;
+            els.unavailableList.innerHTML = "";
+            return;
+          }
+
+          if (startValue) {
+            checkUnavailablePeople();
+          } else {
+            els.unavailableMessage.textContent = "Please select at least a start date.";
+            els.unavailableList.innerHTML = "";
+          }
+        });
+      });
+
+      els.calendarPrevBtn.addEventListener("click", () => changeCalendarMonth(-1));
+      els.calendarNextBtn.addEventListener("click", () => changeCalendarMonth(1));
+      els.calendarTodayBtn.addEventListener("click", () => {
+        calendarMonthDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        selectedCalendarDate = dateStr(new Date());
+        renderCalendar();
+      });
+      els.calendarMonth.addEventListener("change", (event) => {
+        if (!event.target.value) return;
+        const [year, month] = event.target.value.split("-").map(Number);
+        if (!year || !month) return;
+        calendarMonthDate = new Date(year, month - 1, 1);
+        renderCalendar();
+      });
+
+      [els.filterName, els.filterType, els.filterStart, els.filterEnd, els.filterWindow].forEach((filterEl) => {
+        filterEl.addEventListener("input", renderRecordsTable);
+        filterEl.addEventListener("change", renderRecordsTable);
+      });
+
+      els.clearFiltersBtn.addEventListener("click", clearFilters);
+    }
+
+    function init() {
+      setupNavigation();
+      wireEvents();
+      refreshAuthUI();
+
+      const today = dateStr(new Date());
+      els.unavailableStart.value = today;
+      selectedCalendarDate = today;
+      checkUnavailablePeople();
+      refreshAllViews();
+    }
+
+    init();
+  </script>
+</body>
+</html>
