@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay Developer Hub | Glean AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .ebay-blue { color: #00509d; }
+        .bg-ebay-blue { background-color: #00509d; }
+        
+        #glean-chat-container {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 420px;
+            height: 600px;
+            max-height: 80vh;
+            z-index: 1000;
+            display: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 640px) {
+            #glean-chat-container {
+                width: calc(100% - 32px);
+                right: 16px;
+                bottom: 90px;
+                height: 70vh;
+            }
+        }
+
+        .glean-loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: #ffffff;
+            color: #475569;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .loader {
+            border: 3px solid #f1f5f9;
+            border-top: 3px solid #00509d;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-ebay-blue rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-sm">e</div>
+                    <div>
+                        <span class="text-xl font-bold tracking-tight block leading-none">DevHub</span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">eBay Enterprise</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-600">
+                    <a href="#" class="hover:text-blue-600 transition flex items-center gap-1">Docs <i class="fas fa-external-link-alt text-[10px] opacity-50"></i></a>
+                    <a href="#" class="hover:text-blue-600 transition">API Explorer</a>
+                    <a href="#" class="hover:text-blue-600 transition">Community</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center px-3 py-1 bg-slate-100 rounded-lg text-[11px] font-bold text-slate-500 uppercase">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                        Systems Operational
+                    </div>
+                    <button class="bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 transition shadow-sm">
+                        Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-24 pb-20 overflow-hidden bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-6 border border-blue-100">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                NEW: GLEAN AI ASSISTANT NOW LIVE
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 mb-8 tracking-tight">
+                Integrate with <span class="text-blue-600">eBay</span><br/>faster than ever.
+            </h1>
+            <p class="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed">
+                Connect your business to millions of buyers worldwide. Our AI-powered documentation search helps you find the right API endpoint in seconds.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button class="bg-ebay-blue text-white px-10 py-4 rounded-xl font-bold hover:shadow-xl transition transform hover:-translate-y-0.5 text-lg">
+                    Browse API Docs
+                </button>
+                <button onclick="toggleGleanChat()" class="bg-slate-50 border border-slate-200 text-slate-700 px-10 py-4 rounded-xl font-bold hover:bg-white hover:border-blue-400 transition shadow-sm text-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-sparkles text-blue-500"></i> Ask AI Assistant
+                </button>
+            </div>
+        </div>
+        
+        <!-- Decorative Grid -->
+        <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 40px 40px;"></div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div class="grid md:grid-cols-3 gap-10">
+            <div class="group p-8 rounded-3xl bg-white border border-slate-100 hover:border-blue-200 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <i class="fas fa-layer-group text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">RESTful APIs</h3>
+                <p class="text-slate-500 leading-relaxed">Standardized endpoints for inventory, fulfillment, and marketing tools.</p>
+            </div>
+            <div class="group p-8 rounded-3xl bg-white border border-slate-100 hover:border-blue-200 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <i class="fas fa-shield-alt text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Secure Auth</h3>
+                <p class="text-slate-500 leading-relaxed">OAuth 2.0 implementation with fine-grained scopes for data protection.</p>
+            </div>
+            <div class="group p-8 rounded-3xl bg-white border border-slate-100 hover:border-blue-200 transition-all hover:shadow-xl hover:shadow-blue-500/5">
+                <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <i class="fas fa-brain text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">AI Guidance</h3>
+                <p class="text-slate-500 leading-relaxed">Let Glean find the code snippets and examples from across our repositories.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating Chat Widget -->
+    <div id="glean-chat-container">
+        <div class="glean-loading-overlay">
+            <div class="loader"></div>
+            <p class="font-bold text-slate-800">Booting AI Assistant...</p>
+            <p class="text-xs text-slate-400 mt-2 max-w-[200px]">Note: Ensure your domain is authorized in Glean Admin console.</p>
+        </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <div class="fixed bottom-6 right-6 flex flex-col items-end gap-4 z-[1001]">
+        <!-- Hint Bubble -->
+        <div id="chat-hint" class="bg-white px-4 py-2 rounded-xl shadow-xl border border-slate-100 text-sm font-semibold text-slate-700 animate-bounce transition-opacity duration-500">
+            Need help? Ask me! 👋
+        </div>
+        <button onclick="toggleGleanChat()" class="w-16 h-16 bg-ebay-blue text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+            <i id="chat-icon" class="fas fa-comment-dots text-2xl"></i>
+        </button>
+    </div>
+
+    <script>
+        // Configuration
+        const GLEAN_CONFIG = {
+            instanceSlug: 'ebay-be',
+            agentId: '38ac37c08aa145d58844258fd39eecd9',
+            gleanBaseUrl: 'https://ebay-be.glean.com',
+            sdkUrl: 'https://ebay-be.glean.com/embedded-sdk.js'
+        };
+
+        let isChatOpen = false;
+        let gleanInstance = null;
+
+        function getRuntimeDiagnostics() {
+            return {
+                origin: window.location.origin,
+                protocol: window.location.protocol,
+                host: window.location.host,
+                sdkUrl: GLEAN_CONFIG.sdkUrl
+            };
+        }
+
+        function ensureSupportedRuntime() {
+            if (window.location.protocol === 'file:') {
+                throw new Error('Embedded chat cannot run from file://. Serve this page from http://localhost or an authorized https origin.');
+            }
+        }
+
+        /**
+         * Enhanced SDK Loader
+         */
+        function loadGleanSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof Glean !== 'undefined') {
+                    resolve();
+                    return;
+                }
+
+                console.log("Loading Glean SDK from:", GLEAN_CONFIG.sdkUrl);
+                const script = document.createElement('script');
+                script.src = GLEAN_CONFIG.sdkUrl;
+                script.async = true;
+                script.crossOrigin = "anonymous"; // Added to help with CORS issues
+
+                const timeout = setTimeout(() => {
+                    reject(new Error(`SDK load timed out from ${GLEAN_CONFIG.sdkUrl}. Check network filtering and authorized origins.`));
+                }, 8000);
+
+                script.onload = () => {
+                    clearTimeout(timeout);
+                    console.log("Glean SDK Loaded.");
+                    resolve();
+                };
+
+                script.onerror = (e) => {
+                    clearTimeout(timeout);
+                    console.error("SDK Script failed to load:", e);
+                    reject(new Error("Glean SDK script failed to load. The origin may be blocked by security policy or domain not authorized."));
+                };
+
+                document.head.appendChild(script);
+            });
+        }
+
+        async function initGlean() {
+            const chatElement = document.getElementById('glean-chat-container');
+            
+            try {
+                ensureSupportedRuntime();
+                await loadGleanSDK();
+                
+                if (typeof Glean === 'undefined') {
+                    throw new Error("Glean library not ready.");
+                }
+
+                console.log("Initializing Glean for slug:", GLEAN_CONFIG.instanceSlug);
+                gleanInstance = new Glean({
+                    instanceSlug: GLEAN_CONFIG.instanceSlug,
+                });
+
+                if (chatElement) {
+                    gleanInstance.renderChat({
+                        element: chatElement,
+                        agentId: GLEAN_CONFIG.agentId
+                    });
+                    console.log("Chat render initiated.");
+                }
+            } catch (error) {
+                console.error("Glean Error:", error.message);
+                const diagnostics = getRuntimeDiagnostics();
+                if (chatElement) {
+                    chatElement.innerHTML = `
+                        <div class="glean-loading-overlay flex-col">
+                            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-shield-alt text-xl"></i>
+                            </div>
+                            <p class="font-bold text-slate-800">Auth Required</p>
+                            <p class="text-xs text-slate-400 mt-2 px-6">
+                                ${error.message}<br/><br/>
+                                Make sure this exact origin is in <b>Authorized Origins</b> and you are signed in to the same Glean tenant.<br/><br/>
+                                <a href="${GLEAN_CONFIG.gleanBaseUrl}" target="_blank" class="text-blue-600 underline">Open Glean Tenant</a>
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-3 px-6 break-all">
+                                origin: ${diagnostics.origin}<br/>
+                                protocol: ${diagnostics.protocol}<br/>
+                                sdk: ${diagnostics.sdkUrl}
+                            </p>
+                            <button onclick="location.reload()" class="mt-6 text-xs font-bold text-blue-600 uppercase tracking-wider">Retry Connection</button>
+                        </div>`;
+                }
+            }
+        }
+
+        function toggleGleanChat() {
+            const container = document.getElementById('glean-chat-container');
+            const icon = document.getElementById('chat-icon');
+            const hint = document.getElementById('chat-hint');
+            
+            if (!container) return;
+
+            isChatOpen = !isChatOpen;
+            
+            if (isChatOpen) {
+                container.style.display = 'block';
+                icon.className = 'fas fa-times text-2xl';
+                if (hint) hint.style.opacity = '0';
+                
+                if (!gleanInstance) {
+                    initGlean();
+                }
+            } else {
+                container.style.display = 'none';
+                icon.className = 'fas fa-comment-dots text-2xl';
+                if (hint) hint.style.opacity = '1';
+            }
+        }
+
+        // Initialize when window is ready
+        window.addEventListener('load', () => {
+            // Short delay to ensure browser rendering is stable
+            setTimeout(initGlean, 500);
+        });
+    </script>
+</body>
+</html>
