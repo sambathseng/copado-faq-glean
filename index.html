@@ -199,12 +199,27 @@
         const GLEAN_CONFIG = {
             instanceSlug: 'ebay-be',
             agentId: '38ac37c08aa145d58844258fd39eecd9',
-            // Try loading from the primary app domain
-            sdkUrl: 'https://app.glean.com/embedded-sdk.js'
+            gleanBaseUrl: 'https://ebay-be.glean.com',
+            sdkUrl: 'https://ebay-be.glean.com/embedded-sdk.js'
         };
 
         let isChatOpen = false;
         let gleanInstance = null;
+
+        function getRuntimeDiagnostics() {
+            return {
+                origin: window.location.origin,
+                protocol: window.location.protocol,
+                host: window.location.host,
+                sdkUrl: GLEAN_CONFIG.sdkUrl
+            };
+        }
+
+        function ensureSupportedRuntime() {
+            if (window.location.protocol === 'file:') {
+                throw new Error('Embedded chat cannot run from file://. Serve this page from http://localhost or an authorized https origin.');
+            }
+        }
 
         /**
          * Enhanced SDK Loader
@@ -223,7 +238,7 @@
                 script.crossOrigin = "anonymous"; // Added to help with CORS issues
 
                 const timeout = setTimeout(() => {
-                    reject(new Error("SDK load timed out. Check if app.glean.com is blocked by your browser/network."));
+                    reject(new Error(`SDK load timed out from ${GLEAN_CONFIG.sdkUrl}. Check network filtering and authorized origins.`));
                 }, 8000);
 
                 script.onload = () => {
@@ -246,6 +261,7 @@
             const chatElement = document.getElementById('glean-chat-container');
             
             try {
+                ensureSupportedRuntime();
                 await loadGleanSDK();
                 
                 if (typeof Glean === 'undefined') {
@@ -266,6 +282,7 @@
                 }
             } catch (error) {
                 console.error("Glean Error:", error.message);
+                const diagnostics = getRuntimeDiagnostics();
                 if (chatElement) {
                     chatElement.innerHTML = `
                         <div class="glean-loading-overlay flex-col">
@@ -274,8 +291,14 @@
                             </div>
                             <p class="font-bold text-slate-800">Auth Required</p>
                             <p class="text-xs text-slate-400 mt-2 px-6">
-                                The Glean SDK requires the host domain to be authorized.<br/><br/>
-                                <a href="https://app.glean.com" target="_blank" class="text-blue-600 underline">Open Glean</a> directly or add this domain to <b>Authorized Origins</b> in Admin.
+                                ${error.message}<br/><br/>
+                                Make sure this exact origin is in <b>Authorized Origins</b> and you are signed in to the same Glean tenant.<br/><br/>
+                                <a href="${GLEAN_CONFIG.gleanBaseUrl}" target="_blank" class="text-blue-600 underline">Open Glean Tenant</a>
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-3 px-6 break-all">
+                                origin: ${diagnostics.origin}<br/>
+                                protocol: ${diagnostics.protocol}<br/>
+                                sdk: ${diagnostics.sdkUrl}
                             </p>
                             <button onclick="location.reload()" class="mt-6 text-xs font-bold text-blue-600 uppercase tracking-wider">Retry Connection</button>
                         </div>`;
